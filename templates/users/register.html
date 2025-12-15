@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+
+{% block title %}Регистрация - Electronica Store{% endblock %}
+
+{% block content %}
+<div class="header-nav">
+    <a href="{% url 'main:index' %}" class="nav-link">← На главную</a>
+</div>
+
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-decoration">
+            <div class="auth-icon">✨</div>
+        </div>
+
+        <h1 class="auth-title">Создание аккаунта</h1>
+        <p class="auth-subtitle">Присоединяйтесь к нашему сообществу электронщиков</p>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+
+            {% if form.errors %}
+            <div class="alert alert-error">
+                ❌ Пожалуйста, исправьте ошибки в форме ниже.
+            </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="id_username" class="form-label">
+                    👤 Имя пользователя
+                </label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                <div class="error-text">
+                    {{ form.username.errors }}
+                </div>
+                {% endif %}
+                <small class="form-help">• Не более 150 символов<br>• Только буквы, цифры и @/./+/-/_</small>
+            </div>
+
+            <div class="form-group">
+                <label for="id_email" class="form-label">
+                    📧 Email адрес
+                </label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                <div class="error-text">
+                    {{ form.email.errors }}
+                </div>
+                {% endif %}
+                <small class="form-help">• Обязательное поле<br>• Должен быть уникальным</small>
+            </div>
+
+            <div class="form-group">
+                <label for="id_secret_question" class="form-label">
+                    ❓ Секретный вопрос для восстановления
+                </label>
+                {{ form.secret_question }}
+                {% if form.secret_question.errors %}
+                <div class="error-text">
+                    {{ form.secret_question.errors }}
+                </div>
+                {% endif %}
+                <small class="form-help">• Например: "Девичья фамилия матери?"</small>
+            </div>
+
+            <div class="form-group">
+                <label for="id_secret_answer" class="form-label">
+                    🔐 Ответ на секретный вопрос
+                </label>
+                {{ form.secret_answer }}
+                {% if form.secret_answer.errors %}
+                <div class="error-text">
+                    {{ form.secret_answer.errors }}
+                </div>
+                {% endif %}
+                <small class="form-help">• Запомните этот ответ<br>• Он потребуется для восстановления пароля</small>
+            </div>
+
+            <div class="form-group">
+                <label for="id_password1" class="form-label">
+                    🔒 Пароль
+                </label>
+                {{ form.password1 }}
+                {% if form.password1.errors %}
+                <div class="error-text">
+                    {{ form.password1.errors }}
+                </div>
+                {% endif %}
+                <small class="form-help">
+                    • Не менее 8 символов<br>
+                    • Не должен быть слишком простым<br>
+                    • Не должен состоять только из цифр
+                </small>
+                <div class="password-strength">
+                    <div class="strength-bar strength-weak"></div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="id_password2" class="form-label">
+                    🔒 Подтверждение пароля
+                </label>
+                {{ form.password2 }}
+                {% if form.password2.errors %}
+                <div class="error-text">
+                    {{ form.password2.errors }}
+                </div>
+                {% endif %}
+                <small class="form-help">• Введите тот же пароль для проверки</small>
+            </div>
+
+            <button type="submit" class="auth-button register">
+                🎉 Создать аккаунт
+            </button>
+        </form>
+
+        <div class="auth-links">
+            <p>Уже есть аккаунт? <a href="{% url 'users:login' %}" class="auth-link">Войти в систему</a></p>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const password1 = document.getElementById('id_password1');
+    const password2 = document.getElementById('id_password2');
+    const strengthBar = document.querySelector('.strength-bar');
+
+    function checkPasswordStrength(password) {
+        let strength = 0;
+
+        if (password.length >= 8) strength += 1;
+        if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength += 1;
+        if (password.match(/\d/)) strength += 1;
+        if (password.match(/[^a-zA-Z\d]/)) strength += 1;
+
+        return strength;
+    }
+
+    function updateStrengthBar(strength) {
+        strengthBar.className = 'strength-bar';
+
+        if (strength === 0) {
+            strengthBar.classList.add('strength-weak');
+        } else if (strength <= 2) {
+            strengthBar.classList.add('strength-medium');
+        } else {
+            strengthBar.classList.add('strength-strong');
+        }
+    }
+
+    if (password1) {
+        password1.addEventListener('input', function() {
+            const strength = checkPasswordStrength(this.value);
+            updateStrengthBar(strength);
+        });
+    }
+
+    if (password2 && password1) {
+        password2.addEventListener('input', function() {
+            if (this.value !== password1.value) {
+                this.classList.add('error');
+            } else {
+                this.classList.remove('error');
+                this.classList.add('success');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

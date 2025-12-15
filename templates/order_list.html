@@ -1,0 +1,341 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{{ title }}</h1>
+
+<div class="content-section">
+    {% if orders %}
+        <div class="orders-list">
+            {% for order in orders %}
+            <div class="order-card">
+                <div class="order-header">
+                    <div class="order-number">
+                        <strong>Заказ №{{ order.order_number }}</strong>
+                        <span class="order-date">{{ order.created_at|date:"d.m.Y H:i" }}</span>
+                    </div>
+                    <div class="order-status">
+                        <span class="status-badge status-{{ order.status }}">
+                            {{ order.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="order-summary">
+                    <div class="order-items-count">
+                        <span class="icon">🛒</span>
+                        {{ order.items.count }} товар(ов)
+                    </div>
+                    <div class="order-total">
+                        <strong>Итого:</strong> {{ order.final_amount }} ₽
+                    </div>
+                </div>
+
+                <div class="order-info">
+                    <div class="info-row">
+                        <span class="info-label">Адрес доставки:</span>
+                        <span class="info-value">{{ order.address }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Телефон:</span>
+                        <span class="info-value">{{ order.phone }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Способ оплаты:</span>
+                        <span class="info-value">{{ order.get_payment_method_display }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Статус:</span>
+                        <span class="info-value">{{ order.get_status_display }}</span>
+                    </div>
+                    {% if order.promo_code %}
+                    <div class="info-row">
+                        <span class="info-label">Промокод:</span>
+                        <span class="info-value promo-code">{{ order.promo_code }} (скидка {{ order.promo_discount }}%)</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-orders">
+            <div class="empty-icon">📦</div>
+            <h3>У вас пока нет заказов</h3>
+            <p>Оформите свой первый заказ в нашем магазине!</p>
+            <div class="empty-actions">
+                <a href="{% url 'main:catalog' %}" class="nav-link primary-link">
+                    🛍️ Перейти в каталог
+                </a>
+                <a href="{% url 'main:personal_cabinet' %}" class="nav-link secondary-link">
+                    🛒 Перейти в корзину
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+{% block navigation %}
+<div class="navigation">
+    <a href="{% url 'main:index' %}" class="nav-link">🏠 На главную</a>
+    <a href="{% url 'main:catalog' %}" class="nav-link">🛍️ В каталог</a>
+    <a href="{% url 'main:personal_cabinet' %}" class="nav-link">🛒 Корзина</a>
+</div>
+{% endblock %}
+
+<style>
+.orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.order-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-left: 4px solid #3498db;
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.order-number {
+    font-size: 1.1em;
+}
+
+.order-number strong {
+    color: #2c3e50;
+}
+
+.order-date {
+    color: #7f8c8d;
+    font-size: 0.9em;
+    margin-left: 10px;
+}
+
+.status-badge {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.status-processing {
+    background: #cce5ff;
+    color: #004085;
+    border: 1px solid #b8daff;
+}
+
+.status-shipped {
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+.status-delivered {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.status-cancelled {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.order-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px 0;
+}
+
+.order-items-count {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #555;
+}
+
+.order-items-count .icon {
+    font-size: 1.2em;
+}
+
+.order-total {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.order-info {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.info-row {
+    display: flex;
+    margin-bottom: 8px;
+}
+
+.info-row:last-child {
+    margin-bottom: 0;
+}
+
+.info-label {
+    font-weight: 500;
+    color: #555;
+    min-width: 150px;
+}
+
+.info-value {
+    color: #2c3e50;
+    flex: 1;
+}
+
+.info-value.promo-code {
+    color: #4CAF50;
+    font-weight: 500;
+}
+
+.order-actions {
+    text-align: right;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+.order-detail-link {
+    display: inline-block;
+    padding: 8px 16px;
+    background: #3498db;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.order-detail-link:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+}
+
+.empty-orders {
+    text-align: center;
+    padding: 40px 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.empty-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+    opacity: 0.7;
+}
+
+.empty-orders h3 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.empty-orders p {
+    color: #7f8c8d;
+    margin-bottom: 30px;
+    font-size: 1.1em;
+}
+
+.empty-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.primary-link {
+    background: #4CAF50;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.3s;
+}
+
+.primary-link:hover {
+    background: #45a049;
+}
+
+.secondary-link {
+    background: #3498db;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.3s;
+}
+
+.secondary-link:hover {
+    background: #2980b9;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .order-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .order-summary {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .info-row {
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .info-label {
+        min-width: auto;
+    }
+
+    .empty-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .primary-link, .secondary-link {
+        width: 100%;
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}

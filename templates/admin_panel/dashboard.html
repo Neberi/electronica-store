@@ -1,0 +1,108 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Админ-панель - Главная{% endblock %}
+
+{% block page_title %}📊 Статистика{% endblock %}
+
+{% block content %}
+<div class="admin-stats">
+    <div class="stat-card">
+        <h3>👥 Пользователи</h3>
+        <div class="stat-value">{{ total_users }}</div>
+        <p>Всего зарегистрированных</p>
+        <div class="stat-change">↗️ +12 за месяц</div>
+    </div>
+
+    <div class="stat-card">
+        <h3>📦 Заказы</h3>
+        <div class="stat-value">{{ total_orders }}</div>
+        <p>Всего оформлено</p>
+        <div class="stat-change">🔄 {{ conversion_rate }}% конверсия</div>
+    </div>
+
+    <div class="stat-card">
+        <h3>💵 Доход</h3>
+        <div class="stat-value">{{ recent_revenue|floatformat:0 }} ₽</div>
+        <p>За последние 30 дней</p>
+        <div class="stat-change">📈 +15% к прошлому месяцу</div>
+    </div>
+
+    <div class="stat-card">
+        <h3>⭐ Отзывы</h3>
+        <div class="stat-value">{{ total_reviews }}</div>
+        <p>Всего отзывов</p>
+        <div class="stat-change">👍 95% положительных</div>
+    </div>
+</div>
+
+<h2>Статистика по статусам заказов</h2>
+<div class="stats-chart">
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Статус</th>
+                <th>Количество</th>
+                <th>Процент</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stat in order_stats %}
+            <tr>
+                <td>
+                    <span class="status-badge status-{{ stat.status }}">
+                        {{ stat.status }}
+                    </span>
+                </td>
+                <td>{{ stat.count }}</td>
+                <td>{{ stat.percentage|default:"0" }}%</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3">Нет данных</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<h2>Последние заказы</h2>
+{% if recent_orders %}
+<table class="admin-table">
+    <thead>
+        <tr>
+            <th>№ заказа</th>
+            <th>Пользователь</th>
+            <th>Дата</th>
+            <th>Сумма</th>
+            <th>Статус</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for order in recent_orders %}
+        <tr>
+            <td><strong>#{{ order.order_number }}</strong></td>
+            <td>{{ order.user.username }}</td>
+            <td>{{ order.created_at|date:"d.m.Y H:i" }}</td>
+            <td>{{ order.final_amount }} ₽</td>
+            <td>
+                <span class="status-badge status-{{ order.status }}">
+                    {{ order.get_status_display }}
+                </span>
+            </td>
+            <td>
+                <a href="{% url 'main:admin_order_detail' order.id %}" class="btn btn-primary btn-sm">
+                    👁️ Просмотр
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="{% url 'main:admin_orders' %}" class="btn btn-primary">
+    Все заказы →
+</a>
+{% else %}
+<p>Нет недавних заказов</p>
+{% endif %}
+{% endblock %}

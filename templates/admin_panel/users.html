@@ -1,0 +1,154 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Админ-панель - Пользователи{% endblock %}
+
+{% block page_title %}👥 Управление пользователями ({{ user_count }}){% endblock %}
+
+{% block content %}
+<div class="filters">
+    <form method="get" class="filter-row">
+        <div class="form-group">
+            <label class="form-label">Поиск</label>
+            <input type="text" name="q" class="form-control" placeholder="Имя, email..."
+                   value="{{ search_query }}">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Статус staff</label>
+            <select name="is_staff" class="form-control">
+                <option value="">Все</option>
+                <option value="true" {% if is_staff == 'true' %}selected{% endif %}>Staff</option>
+                <option value="false" {% if is_staff == 'false' %}selected{% endif %}>Не staff</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Активность</label>
+            <select name="is_active" class="form-control">
+                <option value="">Все</option>
+                <option value="true" {% if is_active == 'true' %}selected{% endif %}>Активные</option>
+                <option value="false" {% if is_active == 'false' %}selected{% endif %}>Неактивные</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Сортировка</label>
+            <select name="sort_by" class="form-control">
+                <option value="-date_joined" {% if sort_by == '-date_joined' %}selected{% endif %}>Новые</option>
+                <option value="date_joined" {% if sort_by == 'date_joined' %}selected{% endif %}>Старые</option>
+                <option value="username" {% if sort_by == 'username' %}selected{% endif %}>По имени</option>
+                <option value="-last_login" {% if sort_by == '-last_login' %}selected{% endif %}>По активности</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary" style="height: 42px;">🔍 Применить</button>
+            <a href="{% url 'main:admin_users' %}" class="btn btn-secondary" style="height: 42px; margin-left: 10px;">
+                Сбросить
+            </a>
+        </div>
+    </form>
+</div>
+
+{% if users %}
+<table class="admin-table">
+    <thead>
+        <tr>
+            <th>Пользователь</th>
+            <th>Email</th>
+            <th>Дата регистрации</th>
+            <th>Последний вход</th>
+            <th>Статус</th>
+            <th>Статистика</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td>
+                <strong>{{ user.username }}</strong><br>
+                <small>{{ user.get_full_name|default:"Без имени" }}</small>
+            </td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.date_joined|date:"d.m.Y" }}</td>
+            <td>
+                {% if user.last_login %}
+                    {{ user.last_login|date:"d.m.Y H:i" }}
+                {% else %}
+                    Никогда
+                {% endif %}
+            </td>
+            <td>
+                {% if user.is_superuser %}
+                    <span class="badge" style="background: #e74c3c; color: white;">Суперпользователь</span>
+                {% elif user.is_staff %}
+                    <span class="badge" style="background: #3498db; color: white;">Staff</span>
+                {% else %}
+                    <span class="badge" style="background: #95a5a6; color: white;">Пользователь</span>
+                {% endif %}
+
+                {% if user.is_active %}
+                    <span class="badge" style="background: #27ae60; color: white;">Активен</span>
+                {% else %}
+                    <span class="badge" style="background: #e74c3c; color: white;">Неактивен</span>
+                {% endif %}
+            </td>
+            <td>
+                <small>
+                    📦 {{ user.order_count }} заказов<br>
+                    ⭐ {{ user.review_count }} отзывов
+                </small>
+            </td>
+            <td>
+                {% if not user.is_superuser %}
+                <button onclick="toggleStaffStatus('{{ user.id }}', this)"
+                        class="btn btn-{% if user.is_staff %}success{% else %}secondary{% endif %} btn-sm">
+                    Staff: {% if user.is_staff %}Да{% else %}Нет{% endif %}
+                </button>
+                {% else %}
+                <span class="btn btn-sm disabled">Суперпользователь</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if users.paginator.num_pages > 1 %}
+<div class="pagination">
+    {% if users.has_previous %}
+    <li class="page-item">
+        <a class="page-link" href="?page={{ users.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+            ← Назад
+        </a>
+    </li>
+    {% endif %}
+
+    {% for num in users.paginator.page_range %}
+    {% if num > users.number|add:-3 and num < users.number|add:3 %}
+    <li class="page-item">
+        <a class="page-link {% if users.number == num %}active{% endif %}"
+           href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+            {{ num }}
+        </a>
+    </li>
+    {% endif %}
+    {% endfor %}
+
+    {% if users.has_next %}
+    <li class="page-item">
+        <a class="page-link" href="?page={{ users.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+            Вперед →
+        </a>
+    </li>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="alert alert-info">
+    😐 Пользователи не найдены
+</div>
+{% endif %}
+{% endblock %}

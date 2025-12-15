@@ -1,0 +1,178 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Админ-панель - Заказ #{{ order.order_number }}{% endblock %}
+
+{% block page_title %}📦 Заказ #{{ order.order_number }}{% endblock %}
+
+{% block content %}
+<div class="row" style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px;">
+    <div>
+        <!-- Информация о заказе -->
+        <div class="card" style="background: white; padding: 25px; border-radius: 12px; margin-bottom: 20px;">
+            <h3 style="margin-top: 0;">Информация о заказе</h3>
+            <table style="width: 100%;">
+                <tr>
+                    <td><strong>Номер заказа:</strong></td>
+                    <td>#{{ order.order_number }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Дата создания:</strong></td>
+                    <td>{{ order.created_at|date:"d.m.Y H:i" }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Статус:</strong></td>
+                    <td>
+                        <span class="status-badge status-{{ order.status }}">
+                            {{ order.get_status_display }}
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Сумма товаров:</strong></td>
+                    <td>{{ order.total_amount }} ₽</td>
+                </tr>
+                <tr>
+                    <td><strong>Доставка:</strong></td>
+                    <td>{{ order.delivery_cost }} ₽</td>
+                </tr>
+                {% if order.promo_discount %}
+                <tr>
+                    <td><strong>Скидка по промокоду:</strong></td>
+                    <td>-{{ order.promo_discount_amount }} ₽ ({{ order.promo_discount }}%)</td>
+                </tr>
+                {% endif %}
+                <tr>
+                    <td><strong>Итоговая сумма:</strong></td>
+                    <td><strong style="font-size: 1.2rem;">{{ order.final_amount }} ₽</strong></td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Информация о пользователе -->
+        <div class="card" style="background: white; padding: 25px; border-radius: 12px; margin-bottom: 20px;">
+            <h3 style="margin-top: 0;">Информация о покупателе</h3>
+            <table style="width: 100%;">
+                <tr>
+                    <td><strong>Имя пользователя:</strong></td>
+                    <td>{{ order.user.username }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Email:</strong></td>
+                    <td>{{ order.user.email }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Телефон:</strong></td>
+                    <td>{{ order.phone }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Регион:</strong></td>
+                    <td>{{ order.region }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Адрес:</strong></td>
+                    <td>{{ order.address }}</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Товары в заказе -->
+        <div class="card" style="background: white; padding: 25px; border-radius: 12px;">
+            <h3 style="margin-top: 0;">Товары в заказе</h3>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Товар</th>
+                        <th>Количество</th>
+                        <th>Цена</th>
+                        <th>Сумма</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items.all %}
+                    <tr>
+                        <td>{{ item.product_name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.price }} ₽</td>
+                        <td>{{ item.total }} ₽</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div>
+        <!-- Действия -->
+        <div class="card" style="background: white; padding: 25px; border-radius: 12px; margin-bottom: 20px;">
+            <h3 style="margin-top: 0;">Действия</h3>
+
+            <div style="margin-bottom: 15px;">
+                <strong>Изменить статус:</strong>
+                <select onchange="updateOrderStatus('{{ order.id }}', this.value)"
+                        class="form-control" style="margin-top: 10px;">
+                    {% for key, value in STATUS_CHOICES %}
+                    <option value="{{ key }}" {% if order.status == key %}selected{% endif %}>
+                        {{ value }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <strong>Информация о доставке:</strong>
+                <div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 6px;">
+                    {{ order.address }}<br>
+                    {{ order.region }}<br>
+                    📞 {{ order.phone }}
+                </div>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <strong>Способ оплаты:</strong>
+                <div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 6px;">
+                    {{ order.get_payment_method_display }}
+                    {% if order.promo_code %}
+                    <br>Промокод: <strong>{{ order.promo_code }}</strong>
+                    {% endif %}
+                </div>
+            </div>
+
+            <form action="{% url 'main:delete_order' order.id %}" method="post"
+                  class="delete-form" style="margin-top: 20px;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger"
+                        onclick="return confirm('Удалить заказ #{{ order.order_number }}?')">
+                    🗑️ Удалить заказ
+                </button>
+            </form>
+        </div>
+
+        <!-- История статусов -->
+        <div class="card" style="background: white; padding: 25px; border-radius: 12px;">
+            <h3 style="margin-top: 0;">История статусов</h3>
+            <div style="margin-top: 10px;">
+                <div style="border-left: 3px solid #3498db; padding-left: 15px; margin-bottom: 15px;">
+                    <strong>Создан:</strong><br>
+                    {{ order.created_at|date:"d.m.Y H:i" }}
+                </div>
+                <div style="border-left: 3px solid #3498db; padding-left: 15px; margin-bottom: 15px;">
+                    <strong>Обновлен:</strong><br>
+                    {{ order.updated_at|date:"d.m.Y H:i" }}
+                </div>
+                {% if order.status == 'delivered' %}
+                <div style="border-left: 3px solid #27ae60; padding-left: 15px; margin-bottom: 15px;">
+                    <strong>Доставлен:</strong><br>
+                    Дата доставки
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div style="margin-top: 30px;">
+    <a href="{% url 'main:admin_orders' %}" class="btn btn-primary">
+        ← Назад к списку заказов
+    </a>
+</div>
+{% endblock %}

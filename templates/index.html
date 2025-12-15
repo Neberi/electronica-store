@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{{ title }}</h1>
+
+<div class="welcome-section">
+    <p class="welcome-text">Это главная страница нашего веб-приложения. Мы предлагаем широкий ассортимент электронных компонентов, микроконтроллеров и оборудования для ваших проектов.</p>
+    <p class="promo-text">Акционный товар: <strong>{{ promo_product }}</strong></p>
+</div>
+
+<!-- Новые популярные товары -->
+<div class="popular-products-section">
+    <h2 class="section-title">🔥 Популярные товары</h2>
+    <div class="products-preview-grid">
+        <div class="product-preview-card">
+            <div class="product-preview-image">
+                <img src="{% static 'img/core407v.jpg' %}" alt="Core407V">
+            </div>
+            <div class="product-preview-info">
+                <h3>Core407V</h3>
+                <p class="product-preview-description">Отладочная плата STM32F407VET6</p>
+                <div class="product-preview-price">4 350 ₽</div>
+                <a href="{% url 'main:product_core407v' %}" class="product-preview-btn">Подробнее</a>
+            </div>
+        </div>
+
+        <div class="product-preview-card">
+            <div class="product-preview-image">
+                <img src="{% static 'img/programmer.jpg' %}" alt="ST-LINK/V2">
+            </div>
+            <div class="product-preview-info">
+                <h3>ST-LINK/V2</h3>
+                <p class="product-preview-description">Программатор/отладчик</p>
+                <div class="product-preview-price">1 850 ₽</div>
+                <a href="{% url 'main:product_stlink' %}" class="product-preview-btn">Подробнее</a>
+            </div>
+        </div>
+
+        <div class="product-preview-card">
+            <div class="product-preview-image">
+                <img src="{% static 'img/unoR3.jpg' %}" >
+            </div>
+            <div class="product-preview-info">
+                <h3>Arduino Uno R3</h3>
+                <p class="product-preview-description">Скоро в продаже</p>
+                <div class="product-preview-price">2 500 ₽</div>
+                <span class="coming-soon-badge">Скоро будет... закончился(((</span>
+            </div>
+        </div>
+    </div>
+    <div class="view-all-container">
+        <a href="{% url 'main:catalog' %}" class="view-all-btn">Смотреть все товары →</a>
+    </div>
+</div>
+
+<!-- Секция преимуществ -->
+<div class="features-section">
+    <h2 class="section-title">Почему выбирают нас?</h2>
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">🚚</div>
+            <h3>Быстрая доставка</h3>
+            <p>Доставка по всей России от 1 дня. Бесплатная доставка при заказе от 5000₽</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">💯</div>
+            <h3>Гарантия качества</h3>
+            <p>Все товары проходят многоуровневую проверку. Гарантия 12 месяцев на всю продукцию</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🔧</div>
+            <h3>Техподдержка</h3>
+            <p>Профессиональные консультации, помощь в выборе и техническая поддержка 24/7</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">💰</div>
+            <h3>Выгодные цены</h3>
+            <p>Оптовые скидки до 30%, специальные предложения и программа лояльности</p>
+        </div>
+    </div>
+</div>
+
+<!-- Секция категорий -->
+<div class="categories-section">
+    <h2 class="section-title">📦 Категории товаров</h2>
+    <div class="categories-grid">
+        <div class="category-card">
+            <div class="category-icon">🔌</div>
+            <h3>Микроконтроллеры</h3>
+            <p>STM32, Arduino, ESP, Raspberry Pi и другие платформы</p>
+            <span class="category-count">15+ товаров</span>
+        </div>
+        <div class="category-card">
+            <div class="category-icon">🔧</div>
+            <h3>Программаторы</h3>
+            <p>Отладчики, программаторы и инструменты для разработки</p>
+            <span class="category-count">8+ товаров</span>
+        </div>
+        <div class="category-card">
+            <div class="category-icon">📡</div>
+            <h3>Датчики и модули</h3>
+            <p>Сенсоры, беспроводные модули и периферия</p>
+            <span class="category-count">25+ товаров</span>
+        </div>
+        <div class="category-card">
+            <div class="category-icon">⚡</div>
+            <h3>Источники питания</h3>
+            <p>Блоки питания, преобразователи и аккумуляторы</p>
+            <span class="category-count">12+ товаров</span>
+        </div>
+    </div>
+</div>
+
+<!-- Секция статистики -->
+<div class="stats-section">
+    <div class="stats-grid">
+        <div class="stat-item">
+            <div class="stat-number">500+</div>
+            <div class="stat-label">Довольных клиентов</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">99%</div>
+            <div class="stat-label">Положительных отзывов</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">24/7</div>
+            <div class="stat-label">Техподдержка</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">3+</div>
+            <div class="stat-label">Года на рынке</div>
+        </div>
+    </div>
+</div>
+
+<!-- CTA секция -->
+<div class="cta-section">
+    <div class="cta-content">
+        <h2>Готовы начать проект?</h2>
+        <p>Получите бесплатную консультацию по подбору компонентов для вашего проекта</p>
+        <div class="cta-buttons">
+            <a href="{% url 'main:catalog' %}" class="cta-btn primary">Перейти в каталог</a>
+            <a href="{% url 'main:contacts' %}" class="cta-btn secondary">Связаться с нами</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

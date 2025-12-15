@@ -1,0 +1,527 @@
+{% load static %}
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Админ-панель{% endblock %}</title>
+
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+
+    <style>
+        /* Стили админ-панели */
+        :root {
+            --admin-primary: #2c3e50;
+            --admin-secondary: #3498db;
+            --admin-success: #27ae60;
+            --admin-danger: #e74c3c;
+            --admin-warning: #f39c12;
+            --admin-light: #ecf0f1;
+            --admin-dark: #34495e;
+        }
+
+        body {
+            background: #f5f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .admin-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .admin-header {
+            background: white;
+            border-radius: 12px;
+            padding: 20px 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border-left: 5px solid var(--admin-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-header h1 {
+            margin: 0;
+            color: var(--admin-primary);
+            font-size: 1.8rem;
+        }
+
+        .admin-nav {
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .admin-nav ul {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            flex-wrap: wrap;
+        }
+
+        .admin-nav li {
+            border-right: 1px solid #eee;
+        }
+
+        .admin-nav li:last-child {
+            border-right: none;
+        }
+
+        .admin-nav a {
+            display: block;
+            padding: 18px 25px;
+            color: var(--admin-primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .admin-nav a:hover {
+            background: #f8f9fa;
+            color: var(--admin-secondary);
+        }
+
+        .admin-nav a.active {
+            background: var(--admin-secondary);
+            color: white;
+        }
+
+        .admin-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .admin-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border-top: 4px solid var(--admin-secondary);
+        }
+
+        .stat-card h3 {
+            margin: 0 0 10px 0;
+            color: var(--admin-dark);
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--admin-primary);
+            margin: 10px 0;
+        }
+
+        .stat-change {
+            color: var(--admin-success);
+            font-weight: 600;
+        }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .admin-table th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--admin-primary);
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .admin-table td {
+            padding: 15px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .admin-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-processing { background: #d1ecf1; color: #0c5460; }
+        .status-shipped { background: #cce5ff; color: #004085; }
+        .status-delivered { background: #d4edda; color: #155724; }
+        .status-cancelled { background: #f8d7da; color: #721c24; }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: var(--admin-secondary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: var(--admin-danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-success {
+            background: var(--admin-success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.85rem;
+        }
+
+        .filters {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--admin-primary);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            border-color: var(--admin-secondary);
+            outline: none;
+        }
+
+        .pagination {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .page-item {
+            list-style: none;
+        }
+
+        .page-link {
+            padding: 8px 15px;
+            background: #ecf0f1;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .page-link:hover {
+            background: var(--admin-secondary);
+            color: white;
+        }
+
+        .page-link.active {
+            background: var(--admin-secondary);
+            color: white;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        @media (max-width: 768px) {
+            .admin-nav ul {
+                flex-direction: column;
+            }
+
+            .admin-nav li {
+                border-right: none;
+                border-bottom: 1px solid #eee;
+            }
+
+            .admin-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-row {
+                flex-direction: column;
+            }
+
+            .form-group {
+                min-width: 100%;
+            }
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Шапка админ-панели -->
+        <header class="admin-header">
+            <h1>{% block page_title %}Админ-панель{% endblock %}</h1>
+            <div>
+                <span style="margin-right: 20px; color: var(--admin-primary);">
+                    👋 {{ request.user.username }} (суперпользователь)
+                </span>
+                <a href="{% url 'main:index' %}" class="btn btn-primary">
+                    На сайт
+                </a>
+                <a href="{% url 'users:logout' %}" class="btn btn-danger" style="margin-left: 10px;">
+                    Выйти
+                </a>
+            </div>
+        </header>
+
+        <!-- Навигация -->
+        <nav class="admin-nav">
+            <ul>
+                <li>
+                    <a href="{% url 'main:admin_panel' %}"
+                       class="{% if active_section == 'dashboard' %}active{% endif %}">
+                        📊 Статистка
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'main:admin_orders' %}"
+                       class="{% if active_section == 'orders' %}active{% endif %}">
+                        📦 Заказы
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'main:admin_carts' %}"
+                       class="{% if active_section == 'carts' %}active{% endif %}">
+                        🛒 Корзины
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'main:admin_users' %}"
+                       class="{% if active_section == 'users' %}active{% endif %}">
+                        👥 Пользователи
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'main:admin_reviews' %}"
+                       class="{% if active_section == 'reviews' %}active{% endif %}">
+                        ⭐ Отзывы
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Сообщения -->
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Основное содержимое -->
+        <main class="admin-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    {% block scripts %}
+    <script>
+    // Функция для подтверждения действий
+    function confirmAction(message, callback) {
+        if (confirm(message)) {
+            callback();
+        }
+    }
+
+    // Функция для обновления статуса заказа
+    function updateOrderStatus(orderId, newStatus) {
+        fetch(`/admin-panel/orders/${orderId}/update-status/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: `status=${newStatus}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Статус обновлен!');
+                location.reload();
+            } else {
+                alert('Ошибка: ' + data.error);
+            }
+        });
+    }
+
+    // Функция для переключения статуса пользователя
+    function toggleStaffStatus(userId, button) {
+        fetch(`/admin-panel/users/${userId}/toggle-staff/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                button.textContent = data.message;
+                button.className = data.is_staff ? 'btn btn-success btn-sm' : 'btn btn-secondary btn-sm';
+            } else {
+                alert('Ошибка: ' + data.error);
+            }
+        });
+    }
+
+    // Функция для удаления отзыва
+    function deleteReview(reviewId) {
+        if (confirm('Вы уверены, что хотите удалить этот отзыв?')) {
+            fetch(`/admin-panel/reviews/${reviewId}/delete/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Отзыв удален!');
+                    location.reload();
+                } else {
+                    alert('Ошибка: ' + data.error);
+                }
+            });
+        }
+    }
+
+    // Функция для одобрения/скрытия отзыва
+    function toggleReviewApproval(reviewId, button) {
+        fetch(`/admin-panel/reviews/${reviewId}/toggle-approve/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                button.textContent
+                                button.textContent = data.message;
+                button.className = data.is_approved ? 'btn btn-success btn-sm' : 'btn btn-warning btn-sm';
+            } else {
+                alert('Ошибка: ' + data.error);
+            }
+        });
+    }
+
+    // Вспомогательная функция для получения CSRF токена
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Инициализация при загрузке
+    document.addEventListener('DOMContentLoaded', function() {
+        // Добавляем подтверждение для всех форм удаления
+        const deleteForms = document.querySelectorAll('form.delete-form');
+        deleteForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                if (!confirm('Вы уверены, что хотите выполнить это действие?')) {
+                    e.preventDefault();
+                }
+            });
+        });
+    });
+    </script>
+    {% endblock %}
+</body>
+</html>

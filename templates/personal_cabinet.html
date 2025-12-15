@@ -1,0 +1,445 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{{ title }}</h1>
+
+<div class="content-section">
+    <h2>Корзина товаров</h2>
+
+    {% if cart_items %}
+        <div class="cart-items">
+            {% for item in cart_items %}
+            <div class="cart-item" id="cart-item-{{ item.id }}" data-price="{{ item.price }}">
+                <div class="cart-item-image">
+                    <a href="{{ item.url }}">
+                        <img src="{% static 'img/' %}{{ item.image }}" alt="{{ item.name }}"
+                             onerror="this.src='{% static 'img/core407v.jpg' %}'">
+                    </a>
+                </div>
+                <div class="cart-item-info">
+                    <h3><a href="{{ item.url }}" class="product-link">{{ item.name }}</a></h3>
+                    <p class="cart-item-price">
+                        <span class="original-price">{{ item.price }} ₽</span>
+                        {% if item.quantity_discount > 0 %}
+                            <span class="discounted-price">{{ item.discounted_price|floatformat:0 }} ₽</span>
+                            <span class="discount-badge">-{{ item.quantity_discount }}%</span>
+                        {% endif %}
+                        ×
+                        <input type="number"
+                               class="quantity-input cart-quantity"
+                               value="{{ item.quantity }}"
+                               min="1"
+                               data-product-id="{{ item.id }}"
+                               style="width: 60px; display: inline-block;">
+                        = <strong class="item-total">{{ item.total|floatformat:0 }} ₽</strong>
+                    </p>
+                    {% if item.quantity_discount > 0 %}
+                    <p class="quantity-discount-info">
+                        🎉 Скидка за количество: {{ item.quantity_discount }}%
+                        (Экономия: {{ item.discount_savings|floatformat:0 }} ₽)
+                    </p>
+                    {% endif %}
+                </div>
+                <div class="cart-item-actions">
+                    <button class="remove-from-cart" data-product-id="{{ item.id }}">
+                        ❌ Удалить
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="cart-summary">
+            <div class="summary-row">
+                <span>Сумма товаров:</span>
+                <span id="subtotal">{{ total_price|floatformat:0 }} ₽</span>
+            </div>
+            {% if quantity_discount_total > 0 %}
+            <div class="summary-row">
+                <span>Скидка за количество:</span>
+                <span id="quantity-discount">-{{ quantity_discount_total|floatformat:0 }} ₽</span>
+            </div>
+            {% endif %}
+            <div class="summary-row total">
+                <span>Итого к оплате:</span>
+                <span id="final-total">{{ total_price|floatformat:0 }} ₽</span>
+            </div>
+        </div>
+
+        <div class="cart-actions">
+            <a href="{% url 'main:checkout' %}" class="checkout-button">
+                🛍️ Перейти к оформлению заказа
+            </a>
+        </div>
+    {% else %}
+        <div class="empty-cart">
+            <div class="empty-cart-icon">🛒</div>
+            <p>Ваша корзина пуста</p>
+            <a href="{% url 'main:catalog' %}" class="catalog-link">Перейти в каталог товаров</a>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.cart-actions {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.checkout-button {
+    display: inline-block;
+    padding: 15px 40px;
+    background: linear-gradient(135deg, #27ae60, #219a52);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(39, 174, 96, 0.2);
+}
+
+.checkout-button:hover {
+    background: linear-gradient(135deg, #219a52, #1e8449);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(39, 174, 96, 0.3);
+}
+
+.empty-cart {
+    text-align: center;
+    padding: 50px 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    margin: 30px 0;
+}
+
+.empty-cart-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    color: #bdc3c7;
+}
+
+.empty-cart p {
+    font-size: 1.2rem;
+    color: #7f8c8d;
+    margin-bottom: 25px;
+}
+
+.catalog-link {
+    display: inline-block;
+    padding: 12px 30px;
+    background: #3498db;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.catalog-link:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(41, 128, 185, 0.3);
+}
+
+/* Стили для карточек товаров в корзине */
+.cart-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 20px;
+    align-items: center;
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease;
+}
+
+.cart-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+}
+
+.cart-item-image {
+    width: 120px;
+    height: 120px;
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+.cart-item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.cart-item-info {
+    flex: 1;
+}
+
+.cart-item-info h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.2rem;
+}
+
+.product-link {
+    color: #2c3e50;
+    text-decoration: none;
+}
+
+.product-link:hover {
+    color: #3498db;
+    text-decoration: underline;
+}
+
+.cart-item-price {
+    font-size: 1.1rem;
+    margin: 10px 0;
+}
+
+.original-price {
+    color: #7f8c8d;
+    text-decoration: line-through;
+    margin-right: 8px;
+}
+
+.discounted-price {
+    color: #27ae60;
+    font-weight: 600;
+    margin-right: 8px;
+}
+
+.discount-badge {
+    background: #27ae60;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.quantity-discount-info {
+    color: #27ae60;
+    font-size: 0.9rem;
+    margin: 8px 0 0 0;
+    font-weight: 500;
+}
+
+.cart-item-actions {
+    text-align: right;
+}
+
+.remove-from-cart {
+    padding: 8px 16px;
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.remove-from-cart:hover {
+    background: #c0392b;
+    transform: translateY(-2px);
+}
+
+/* Сводка заказа */
+.cart-summary {
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    margin-top: 30px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #ecf0f1;
+    font-size: 1.1rem;
+}
+
+.summary-row:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.summary-row.total {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-top: 10px;
+    padding-top: 15px;
+    border-top: 2px solid #ecf0f1;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .cart-item {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 15px;
+    }
+
+    .cart-item-image {
+        width: 100%;
+        height: 200px;
+        margin: 0 auto;
+    }
+
+    .cart-item-actions {
+        text-align: center;
+    }
+
+    .checkout-button {
+        width: 100%;
+        padding: 15px 20px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Функция для расчета скидки за количество
+    function calculateQuantityDiscount(quantity) {
+        if (quantity >= 10) return 15;
+        if (quantity >= 7) return 10;
+        if (quantity >= 4) return 5;
+        return 0;
+    }
+
+    // Функция для пересчета всех цен
+    function recalculatePrices() {
+        let subtotalWithoutDiscount = 0;
+        let subtotalWithQuantityDiscount = 0;
+        let quantityDiscountTotal = 0;
+
+        // Пересчитываем цены для каждого товара
+        document.querySelectorAll('.cart-item').forEach(item => {
+            const quantityInput = item.querySelector('.cart-quantity');
+            const quantity = parseInt(quantityInput.value);
+            const productId = quantityInput.dataset.productId;
+            const originalPrice = parseFloat(item.dataset.price);
+
+            // Рассчитываем суммы
+            const itemTotalWithoutDiscount = originalPrice * quantity;
+            const quantityDiscount = calculateQuantityDiscount(quantity);
+            const itemTotalWithDiscount = originalPrice * quantity * (1 - quantityDiscount / 100);
+            const itemDiscountSavings = itemTotalWithoutDiscount - itemTotalWithDiscount;
+
+            // Обновляем отображение
+            const originalPriceEl = item.querySelector('.original-price');
+            const discountedPriceEl = item.querySelector('.discounted-price');
+            const discountBadge = item.querySelector('.discount-badge');
+            const itemTotalEl = item.querySelector('.item-total');
+            const discountInfo = item.querySelector('.quantity-discount-info');
+
+            if (quantityDiscount > 0) {
+                const discountedPrice = Math.round(originalPrice * (1 - quantityDiscount / 100));
+                discountedPriceEl.textContent = `${discountedPrice} ₽`;
+                discountBadge.textContent = `-${quantityDiscount}%`;
+                if (discountInfo) {
+                    discountInfo.innerHTML = `🎉 Скидка за количество: ${quantityDiscount}% (Экономия: ${Math.round(itemDiscountSavings)} ₽)`;
+                }
+                discountedPriceEl.style.display = 'inline';
+                discountBadge.style.display = 'inline';
+                itemTotalEl.textContent = `${Math.round(itemTotalWithDiscount)} ₽`;
+            } else {
+                if (discountedPriceEl) discountedPriceEl.style.display = 'none';
+                if (discountBadge) discountBadge.style.display = 'none';
+                itemTotalEl.textContent = `${Math.round(itemTotalWithoutDiscount)} ₽`;
+            }
+
+            // Суммируем
+            subtotalWithoutDiscount += itemTotalWithoutDiscount;
+            subtotalWithQuantityDiscount += quantityDiscount > 0 ? itemTotalWithDiscount : itemTotalWithoutDiscount;
+            quantityDiscountTotal += itemDiscountSavings;
+        });
+
+        const finalTotal = subtotalWithQuantityDiscount;
+
+        // Обновляем итоги
+        document.getElementById('subtotal').textContent = `${Math.round(subtotalWithoutDiscount)} ₽`;
+
+        if (quantityDiscountTotal > 0) {
+            document.getElementById('quantity-discount').textContent = `-${Math.round(quantityDiscountTotal)} ₽`;
+            document.getElementById('quantity-discount').parentElement.style.display = 'flex';
+        } else {
+            document.getElementById('quantity-discount').parentElement.style.display = 'none';
+        }
+
+        document.getElementById('final-total').textContent = `${Math.round(finalTotal)} ₽`;
+    }
+
+    // Обработчик изменения количества
+    document.querySelectorAll('.cart-quantity').forEach(input => {
+        input.addEventListener('change', function() {
+            const productId = this.dataset.productId;
+            const quantity = parseInt(this.value);
+
+            fetch(`{% url 'main:update_cart_quantity' '0' %}`.replace('0', productId), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: `quantity=${quantity}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    recalculatePrices();
+                }
+            })
+            .catch(error => {
+                console.error('Error updating quantity:', error);
+                recalculatePrices();
+            });
+        });
+    });
+
+    // Обработчик удаления товара
+    document.querySelectorAll('.remove-from-cart').forEach(button => {
+        button.addEventListener('click', function() {
+            const productId = this.dataset.productId;
+
+            fetch(`{% url 'main:remove_from_cart' '0' %}`.replace('0', productId), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById(`cart-item-${productId}`).remove();
+
+                    if (data.cart_count === 0) {
+                        location.reload();
+                    } else {
+                        recalculatePrices();
+                    }
+                }
+            });
+        });
+    });
+
+    // Инициализация при загрузке
+    document.addEventListener('DOMContentLoaded', function() {
+        recalculatePrices();
+    });
+</script>
+{% endblock %}

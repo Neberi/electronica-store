@@ -1,0 +1,134 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Админ-панель - Корзины{% endblock %}
+
+{% block page_title %}🛒 Управление корзинами ({{ cart_count }}){% endblock %}
+
+{% block content %}
+<div class="filters">
+    <form method="get" class="filter-row">
+        <div class="form-group">
+            <label class="form-label">Пользователь</label>
+            <input type="text" name="user" class="form-control" placeholder="Имя пользователя..."
+                   value="{{ user_filter }}">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Наличие товаров</label>
+            <select name="has_items" class="form-control">
+                <option value="">Все</option>
+                <option value="true" {% if has_items == 'true' %}selected{% endif %}>С товарами</option>
+                <option value="false" {% if has_items == 'false' %}selected{% endif %}>Пустые</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Сортировка</label>
+            <select name="sort_by" class="form-control">
+                <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>Новые сначала</option>
+                <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Старые сначала</option>
+                <option value="user__username" {% if sort_by == 'user__username' %}selected{% endif %}>По имени</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary" style="height: 42px;">🔍 Применить</button>
+            <a href="{% url 'main:admin_carts' %}" class="btn btn-secondary" style="height: 42px; margin-left: 10px;">
+                Сбросить
+            </a>
+        </div>
+    </form>
+</div>
+
+{% if carts %}
+<table class="admin-table">
+    <thead>
+        <tr>
+            <th>Пользователь</th>
+            <th>Дата создания</th>
+            <th>Товаров</th>
+            <th>Всего позиций</th>
+            <th>Последнее обновление</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for cart in carts %}
+        <tr>
+            <td>
+                <strong>{{ cart.user.username }}</strong><br>
+                <small>{{ cart.user.email }}</small>
+            </td>
+            <td>{{ cart.created_at|date:"d.m.Y H:i" }}</td>
+            <td><span class="badge">{{ cart.item_count }}</span></td>
+            <td><span class="badge">{{ cart.total_items }}</span></td>
+            <td>
+                {% if cart.items.all %}
+                    {{ cart.items.last.added_at|date:"d.m.Y H:i" }}
+                {% else %}
+                    Нет товаров
+                {% endif %}
+            </td>
+            <td>
+                <form action="{% url 'main:delete_cart' cart.id %}" method="post" class="delete-form" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm"
+                            onclick="return confirm('Удалить корзину пользователя {{ cart.user.username }}?')">
+                        🗑️ Удалить
+                    </button>
+                </form>
+            </td>
+        </tr>
+        {% if cart.item_count > 0 %}
+        <tr style="background: #f8f9fa;">
+            <td colspan="6">
+                <small><strong>Товары в корзине:</strong></small><br>
+                {% for item in cart.items.all %}
+                <span style="display: inline-block; background: #e9ecef; padding: 2px 8px; border-radius: 10px; margin: 2px; font-size: 0.85rem;">
+                    {{ item.product_id }} × {{ item.quantity }}
+                </span>
+                {% endfor %}
+            </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if carts.paginator.num_pages > 1 %}
+<div class="pagination">
+    {% if carts.has_previous %}
+    <li class="page-item">
+        <a class="page-link" href="?page={{ carts.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+            ← Назад
+        </a>
+    </li>
+    {% endif %}
+
+    {% for num in carts.paginator.page_range %}
+    {% if num > carts.number|add:-3 and num < carts.number|add:3 %}
+    <li class="page-item">
+        <a class="page-link {% if carts.number == num %}active{% endif %}"
+           href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+            {{ num }}
+        </a>
+    </li>
+    {% endif %}
+    {% endfor %}
+
+    {% if carts.has_next %}
+    <li class="page-item">
+        <a class="page-link" href="?page={{ carts.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+            Вперед →
+        </a>
+    </li>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="alert alert-info">
+    😐 Корзины не найдены
+</div>
+{% endif %}
+{% endblock %}

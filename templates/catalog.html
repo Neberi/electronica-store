@@ -1,0 +1,338 @@
+{% extends 'base.html' %}
+{% load static %}  <!-- ВОТ ЭТО ДОБАВИТЬ НА ВТОРОЙ СТРОЧКЕ -->
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Каталог товаров */
+.catalog-description {
+    font-size: 1.1rem;
+    color: #555;
+    margin-bottom: 30px;
+    line-height: 1.6;
+    max-width: 800px;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.auth-notice {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.auth-notice-icon {
+    font-size: 2rem;
+}
+
+.auth-notice-content h3 {
+    margin: 0 0 8px 0;
+    color: white;
+    font-size: 1.3rem;
+}
+
+.auth-notice-content p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.auth-notice-content a {
+    color: #f1c40f;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.auth-notice-content a:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 25px;
+    margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+    .products-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+}
+
+.product-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.product-image {
+    height: 200px;
+    overflow: hidden;
+    position: relative;
+    background: #f8f9fa;
+}
+
+.product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.product-card:hover .product-image img {
+    transform: scale(1.05);
+}
+
+.image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    color: #bdc3c7;
+    background: #ecf0f1;
+}
+
+.product-info {
+    padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.product-info h3 {
+    margin: 0 0 10px 0;
+    color: #2c3e50;
+    font-size: 1.2rem;
+    line-height: 1.4;
+    min-height: 3.4em;
+}
+
+.product-description {
+    color: #7f8c8d;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 15px;
+    flex: 1;
+}
+
+.product-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-top: 10px;
+    border-top: 1px solid #ecf0f1;
+}
+
+.product-price {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #27ae60;
+}
+
+/* Стили для статусов */
+.stock-info {
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.in-stock {
+    color: #27ae60;
+    background-color: rgba(39, 174, 96, 0.1);
+}
+
+.out-of-stock {
+    color: #e74c3c;
+    background-color: rgba(231, 76, 60, 0.1);
+}
+
+.view-product-btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 600;
+    text-align: center;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.view-product-btn:hover {
+    background: linear-gradient(135deg, #2980b9, #1f639c);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(41, 128, 185, 0.3);
+}
+
+.coming-soon {
+    display: inline-block;
+    padding: 10px 20px;
+    background: #f8f9fa;
+    color: #7f8c8d;
+    border-radius: 6px;
+    font-weight: 600;
+    text-align: center;
+    border: 1px solid #dee2e6;
+    font-size: 0.95rem;
+}
+
+/* Навигация */
+.navigation {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 2px solid #ecf0f1;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: #3498db;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(41, 128, 185, 0.3);
+}
+
+.nav-link:active {
+    transform: translateY(0);
+}
+
+/* Адаптивность */
+@media (max-width: 480px) {
+    .product-details {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+
+    .navigation {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .nav-link {
+        justify-content: center;
+    }
+
+    .auth-notice {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{{ title }}</h1>
+
+<div class="content-section">
+    <p class="catalog-description">Здесь представлен полный ассортимент наших товаров. Выбирайте качественные компоненты для ваших проектов!</p>
+
+    {% if not user.is_authenticated %}
+    <div class="auth-notice">
+        <div class="auth-notice-icon">🔒</div>
+        <div class="auth-notice-content">
+            <h3>Требуется авторизация</h3>
+            <p>Для добавления товаров в корзину необходимо <a href="{% url 'users:login' %}">войти</a> или <a href="{% url 'users:register' %}">зарегистрироваться</a></p>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="products-grid">
+        {% for product in products %}
+        <div class="product-card">
+            <div class="product-image">
+                {% if product.image %}
+                    <img src="{% static 'img/' %}{{ product.image }}" alt="{{ product.title }}"
+                         onerror="this.src='{% static 'img/core407v.jpg' %}'">
+                {% else %}
+                    <div class="image-placeholder">📷</div>
+                {% endif %}
+            </div>
+            <div class="product-info">
+                <h3>{{ product.title }}</h3>
+                <p class="product-description">{{ product.description|truncatewords:10 }}</p>
+                <div class="product-details">
+                    <div class="product-price">{{ product.price }} ₽</div>
+                    {% if product.available %}
+                        <div class="stock-info in-stock">✓ В наличии</div>
+                    {% else %}
+                        <div class="stock-info out-of-stock">✗ Нет в наличии</div>
+                    {% endif %}
+                </div>
+
+                {% if product.url_name %}
+                    {# Если есть url_name - это активная ссылка #}
+                    {% if product.available or product.id == 'arduino-uno' %}
+                        {# Для товара в наличии или для Arduino (специальный случай) #}
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'main:'|add:product.url_name %}" class="view-product-btn">Подробнее</a>
+                        {% else %}
+                            <a href="{% url 'main:'|add:product.url_name %}" class="view-product-btn">Посмотреть</a>
+                        {% endif %}
+                    {% else %}
+                        {# Для товаров не в наличии (кроме Arduino) #}
+                        <span class="coming-soon">Скоро в продаже</span>
+                    {% endif %}
+                {% else %}
+                        <a href="#" class="view-product-btn">Посмотреть</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="navigation">
+    <a href="{% url 'main:index' %}" class="nav-link">← Вернуться на главную</a>
+    {% if user.is_authenticated %}
+        <a href="{% url 'main:personal_cabinet' %}" class="nav-link">👤 Перейти в корзину</a>
+    {% else %}
+        <a href="{% url 'users:login' %}" class="nav-link">🔑 Войти в систему</a>
+    {% endif %}
+</div>
+{% endblock %}

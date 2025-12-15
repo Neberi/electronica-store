@@ -1,0 +1,144 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Админ-панель - Заказы{% endblock %}
+
+{% block page_title %}📦 Управление заказами ({{ order_count }}){% endblock %}
+
+{% block content %}
+<div class="filters">
+    <form method="get" class="filter-row">
+        <div class="form-group">
+            <label class="form-label">Поиск</label>
+            <input type="text" name="q" class="form-control" placeholder="Номер, имя, телефон..."
+                   value="{{ search_query }}">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Статус</label>
+            <select name="status" class="form-control">
+                <option value="">Все статусы</option>
+                {% for key, value in STATUS_CHOICES %}
+                <option value="{{ key }}" {% if status_filter == key %}selected{% endif %}>
+                    {{ value }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">С</label>
+            <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">По</label>
+            <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Сортировка</label>
+            <select name="sort_by" class="form-control">
+                <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>Новые сначала</option>
+                <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Старые сначала</option>
+                <option value="order_number" {% if sort_by == 'order_number' %}selected{% endif %}>По номеру</option>
+                <option value="final_amount" {% if sort_by == 'final_amount' %}selected{% endif %}>По сумме</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary" style="height: 42px;">🔍 Применить</button>
+            <a href="{% url 'main:admin_orders' %}" class="btn btn-secondary" style="height: 42px; margin-left: 10px;">
+                Сбросить
+            </a>
+        </div>
+    </form>
+</div>
+
+{% if orders %}
+<table class="admin-table">
+    <thead>
+        <tr>
+            <th>№ заказа</th>
+            <th>Пользователь</th>
+            <th>Дата</th>
+            <th>Сумма</th>
+            <th>Статус</th>
+            <th>Оплата</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for order in orders %}
+        <tr>
+            <td><strong>#{{ order.order_number }}</strong></td>
+            <td>
+                {{ order.user.username }}<br>
+                <small>{{ order.user.email }}</small>
+            </td>
+            <td>{{ order.created_at|date:"d.m.Y H:i" }}</td>
+            <td><strong>{{ order.final_amount }} ₽</strong></td>
+            <td>
+                <select onchange="updateOrderStatus('{{ order.id }}', this.value)" class="form-control" style="width: auto;">
+                    {% for key, value in STATUS_CHOICES %}
+                    <option value="{{ key }}" {% if order.status == key %}selected{% endif %}>
+                        {{ value }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>{{ order.get_payment_method_display }}</td>
+            <td>
+                <a href="{% url 'main:admin_order_detail' order.id %}" class="btn btn-primary btn-sm">
+                    👁️
+                </a>
+                <form action="{% url 'main:delete_order' order.id %}" method="post"
+                      class="delete-form" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm"
+                            onclick="return confirm('Удалить заказ #{{ order.order_number }}?')">
+                        🗑️
+                    </button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if orders.paginator.num_pages > 1 %}
+<div class="pagination">
+    {% if orders.has_previous %}
+    <li class="page-item">
+        <a class="page-link" href="?page={{ orders.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+            ← Назад
+        </a>
+    </li>
+    {% endif %}
+
+    {% for num in orders.paginator.page_range %}
+    {% if num > orders.number|add:-3 and num < orders.number|add:3 %}
+    <li class="page-item">
+        <a class="page-link {% if orders.number == num %}active{% endif %}"
+           href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+            {{ num }}
+        </a>
+    </li>
+    {% endif %}
+    {% endfor %}
+
+    {% if orders.has_next %}
+    <li class="page-item">
+        <a class="page-link" href="?page={{ orders.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+            Вперед →
+        </a>
+    </li>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="alert alert-info">
+    😐 Заказы не найдены
+</div>
+{% endif %}
+{% endblock %}

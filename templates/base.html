@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Магазин электронных компонентов{% endblock %}</title>
+
+    {% load static %}
+
+    <!-- Основные стили -->
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+
+    <!-- Favicon -->
+    <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+
+    <!-- Дополнительные стили из блоков -->
+    {% block extra_css %}{% endblock %}
+
+    <meta name="description" content="Магазин электронных компонентов - микроконтроллеры, программаторы, радиодетали">
+</head>
+<body>
+    <div class="container">
+        <!-- Шапка сайта -->
+        <header class="header-nav">
+            <!-- Бренд и логотип -->
+            <div class="header-brand">
+                <div class="header-logo">
+                    <img src="{% static 'img/logo.png' %}"
+                         alt="Логотип магазина электронных компонентов"
+                         height="50">
+                </div>
+                <div class="header-title">
+                    <h1>Электроника Store</h1>
+                    <p>Ваш надежный поставщик компонентов</p>
+                </div>
+            </div>
+
+            <!-- Действия пользователя -->
+            <div class="header-actions">
+                <div class="user-nav">
+                    {% if user.is_authenticated %}
+                        <!-- Авторизованный пользователь -->
+                        <span class="user-greeting">👋 Привет, {{ user.username }}!</span>
+                        <div class="user-actions">
+                            <a href="{% url 'main:order_list' %}" class="user-action-link">
+                                <span class="icon">📋</span>
+                                Мои заказы
+                            </a>
+
+                            <a href="{% url 'main:personal_cabinet' %}" class="user-action-link">
+                                <span class="icon">👤</span>
+                                Кабинет
+                            </a>
+
+                            <!-- Динамически обновляемая корзина -->
+                            <a href="{% url 'main:personal_cabinet' %}" class="cart-counter" id="cart-counter">
+                                <span class="icon">🛒</span>
+                                <span class="cart-count">{{ cart_count|default:0 }}</span>
+                            </a>
+
+                            <a href="{% url 'users:logout' %}" class="user-action-link logout">
+                                <span class="icon">🚪</span>
+                                Выйти
+                            </a>
+                        </div>
+                    {% else %}
+                        <!-- Неавторизованный пользователь -->
+                        <div class="user-actions">
+                            <a href="{% url 'users:login' %}" class="user-action-link">
+                                <span class="icon">🔑</span>
+                                Войти
+                            </a>
+                            <a href="{% url 'users:register' %}" class="user-action-link">
+                                <span class="icon">✨</span>
+                                Регистрация
+                            </a>
+                            <span class="cart-counter empty disabled">
+                                <span class="icon">🛒</span>
+                                <span class="cart-count">-</span>
+                            </span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </header>
+
+        <!-- Основная навигация -->
+        <nav class="main-nav" aria-label="Основное меню">
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="{% url 'main:index' %}"
+                       class="nav-link {% if request.resolver_match.url_name == 'index' %}active{% endif %}">
+                        🏠 Главная
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'main:catalog' %}"
+                       class="nav-link {% if request.resolver_match.url_name == 'catalog' %}active{% endif %}">
+                        🛍️ Каталог
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'main:about' %}"
+                       class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}">
+                        📋 О нас
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'main:contacts' %}"
+                       class="nav-link {% if request.resolver_match.url_name == 'contacts' %}active{% endif %}">
+                        📞 Контакты
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Основное содержимое -->
+        <main class="main-content">
+            {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- Подвал сайта -->
+        <footer class="page-footer">
+            {% block footer %}
+                <div class="footer-content">
+                    <!-- Информация о магазине -->
+                    <div class="footer-section">
+                        <h3>Магазин электронных компонентов</h3>
+                        <p>Качественные компоненты для ваших проектов</p>
+                    </div>
+
+                    <!-- Быстрые ссылки -->
+                    <div class="footer-section">
+                        <h4>Быстрые ссылки</h4>
+                        <div class="footer-links">
+                            <a href="{% url 'main:index' %}">Главная</a>
+                            <a href="{% url 'main:catalog' %}">Каталог</a>
+                            <a href="{% url 'main:about' %}">О проекте</a>
+                            <a href="{% url 'main:contacts' %}">Контакты</a>
+
+                            {% if user.is_authenticated %}
+                                <a href="{% url 'main:personal_cabinet' %}">Личный кабинет</a>
+                                <a href="{% url 'main:order_list' %}">Мои заказы</a>
+                                {% if user.is_superuser %}
+                                    <a href="{% url 'main:admin_panel' %}">🔒 Админ-панель</a>
+                                {% endif %}
+                                <a href="{% url 'users:logout' %}">Выйти</a>
+                            {% else %}
+                                <a href="{% url 'users:login' %}">Войти</a>
+                                <a href="{% url 'users:register' %}">Регистрация</a>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Контактная информация -->
+                    <div class="footer-section">
+                        <h4>Контакты</h4>
+                        <address>
+                            <p>📞 +7 (991) 353-62-51</p>
+                            <p>📧 info@electronica-store.ru</p>
+                            <p>🏢 г. Тула, ул. Н. Руднева, д. 111</p>
+                        </address>
+                    </div>
+                </div>
+
+                <!-- Копирайт -->
+                <div class="footer-bottom">
+                    <p>&copy; 2025 Магазин электронных компонентов. Все права защищены.</p>
+                </div>
+            {% endblock %}
+        </footer>
+    </div>
+
+    <!-- Промокоды (скрыты по умолчанию) -->
+    <div id="promo-codes" hidden>
+        <div data-code="WELCOME5" data-discount="5">Промокод WELCOME5 - скидка 5%</div>
+        <div data-code="ELECTRO10" data-discount="10">Промокод ELECTRO10 - скидка 10%</div>
+        <div data-code="TECH15" data-discount="15">Промокод TECH15 - скидка 15%</div>
+        <div data-code="MEGA25" data-discount="25">Промокод MEGA25 - скидка 25%</div>
+    </div>
+
+    <!-- Глобальные функции для обновления корзины -->
+    <script>
+    // Глобальная функция для обновления счетчика корзины
+    function updateCartCounter(count) {
+        const cartCountElements = document.querySelectorAll('.cart-count');
+        cartCountElements.forEach(element => {
+            element.textContent = count;
+        });
+
+        // Обновляем классы если нужно
+        const cartCounter = document.getElementById('cart-counter');
+        if (cartCounter) {
+            if (count > 0) {
+                cartCounter.classList.remove('empty', 'disabled');
+            } else {
+                cartCounter.classList.add('empty');
+            }
+        }
+
+        // Также обновляем все элементы с классом cart-count
+        document.querySelectorAll('.cart-counter').forEach(counter => {
+            const countElement = counter.querySelector('.cart-count');
+            if (countElement) {
+                countElement.textContent = count;
+                if (count > 0) {
+                    counter.classList.remove('empty', 'disabled');
+                } else {
+                    counter.classList.add('empty');
+                }
+            }
+        });
+    }
+
+    // Функция для получения CSRF токена
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Функция для показа уведомлений
+    function showNotification(message, type = 'success') {
+        // Удаляем старые уведомления
+        const oldNotifications = document.querySelectorAll('.global-notification');
+        oldNotifications.forEach(notification => notification.remove());
+
+        const notification = document.createElement('div');
+        notification.className = `global-notification notification-${type}`;
+        notification.innerHTML = `
+            <div class="notification-content">
+                <span class="notification-message">${message}</span>
+                <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
+            </div>
+        `;
+
+        // Стили для уведомления
+        notification.style.cssText = `
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: ${type === 'error' ? '#e74c3c' : type === 'warning' ? '#f39c12' : '#27ae60'};
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            z-index: 10000;
+            font-weight: 600;
+            animation: slideIn 0.3s ease;
+            max-width: 400px;
+        `;
+
+        document.body.appendChild(notification);
+
+        // Автоматическое скрытие
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }
+        }, 3000);
+    }
+
+    // При загрузке страницы обновляем счетчик корзины
+    document.addEventListener('DOMContentLoaded', function() {
+        // Если пользователь авторизован, можно подгрузить актуальное количество товаров
+        {% if user.is_authenticated %}
+            // Можно добавить AJAX запрос для получения актуального количества
+             fetch('/cart/get_count/')
+                 .then(response => response.json())
+                 .then(data => {
+                     if (data.success) {
+                         updateCartCounter(data.count);
+                     }
+                 });
+        {% endif %}
+    });
+    </script>
+
+    <style>
+    /* Анимации для уведомлений */
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @keyframes slideOut {
+        from {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+    }
+
+    /* Стили для счетчика корзины */
+    .cart-counter {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 8px 15px;
+        background: #3498db;
+        color: white;
+        border-radius: 20px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .cart-counter:hover {
+        background: #2980b9;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+    }
+
+    .cart-counter.empty {
+        opacity: 0.7;
+        background: #f8f9fa;
+        color: #6c757d;
+        cursor: not-allowed;
+    }
+
+    .cart-counter.empty:hover {
+        background: #f8f9fa;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .cart-counter .cart-count {
+        background: #e74c3c;
+        color: white;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+
+    .cart-counter.empty .cart-count {
+        background: #95a5a6;
+    }
+
+    /* Стили для ссылок пользователя */
+    .user-actions {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .user-action-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 8px 15px;
+        background: #f8f9fa;
+        color: #2c3e50;
+        border-radius: 20px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .user-action-link:hover {
+        background: #3498db;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .user-action-link.logout:hover {
+        background: #e74c3c;
+    }
+    </style>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

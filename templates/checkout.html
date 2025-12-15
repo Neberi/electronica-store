@@ -1,0 +1,1153 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+
+<h1 class="page-title">{{ title }}</h1>
+
+<div class="checkout-container">
+    <div class="checkout-content">
+        <!-- Левая колонка - форма оформления -->
+        <div class="checkout-form-section">
+            <!-- Секция промокода -->
+            <div class="form-section">
+                <h3>🎁 Промокод</h3>
+                <div class="promo-section">
+                    <div class="promo-input-group">
+                        <input type="text" id="promo-code-input" class="promo-input"
+                               placeholder="Введите промокод" value="">
+                        <button type="button" id="apply-promo-btn" class="promo-btn">
+                            Применить
+                        </button>
+                    </div>
+                    <div id="promo-message" class="promo-message"></div>
+                    <div id="available-promos" class="available-promos">
+                        <p><strong>Доступные промокоды:</strong></p>
+                        <div class="promo-list">
+                            <span class="promo-item" data-code="WELCOME5">WELCOME5 - 5%</span>
+                            <span class="promo-item" data-code="ELECTRO10">ELECTRO10 - 10%</span>
+                            <span class="promo-item" data-code="TECH15">TECH15 - 15%</span>
+                            <span class="promo-item" data-code="MEGA25">MEGA25 - 25%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>🚚 Данные доставки</h3>
+
+                <div class="form-group">
+                    <label class="form-label">Регион доставки *</label>
+                    <select id="region-select" class="form-select" required>
+                        <option value="">Выберите регион</option>
+                        <option value="moscow_region">Московская область (бесплатно)</option>
+                        <option value="near_regions">Ближайшие регионы (1 000 ₽)</option>
+                        <option value="other_regions">Другие регионы (5 000 ₽)</option>
+                    </select>
+                    <div class="form-help">Доставка осуществляется только в указанные регионы</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Адрес доставки *</label>
+                    <textarea id="address-input" class="form-textarea" placeholder="Введите полный адрес доставки" required rows="3"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Телефон для связи *</label>
+                    <input type="tel" id="phone-input" class="form-input" placeholder="+7 (XXX) XXX-XX-XX" required>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>💳 Способ оплаты</h3>
+                <div class="payment-methods">
+    <label class="payment-method">
+        <input type="radio" name="payment" value="card" checked>  <!-- было card_courier -->
+        <span class="payment-info">
+            <span class="payment-title">💳 Картой курьеру</span>
+            <span class="payment-desc">Оплата банковской картой при получении</span>
+        </span>
+    </label>
+
+    <label class="payment-method">
+        <input type="radio" name="payment" value="cash">  <!-- было cash_courier -->
+        <span class="payment-info">
+            <span class="payment-title">💵 Наличными курьеру</span>
+            <span class="payment-desc">Оплата наличными при получении</span>
+        </span>
+    </label>
+</div>
+            </div>
+
+            <button id="submit-order" class="checkout-button">
+                🎉 Подтвердить заказ
+            </button>
+        </div>
+
+        <!-- Правая колонка - итоги -->
+        <div class="checkout-summary">
+            <h3>📦 Ваш заказ</h3>
+
+            <div class="order-items">
+                {% for item in cart_items %}
+                <div class="order-item">
+                    <div class="item-info">
+                        <span class="item-name">
+                            {% if item.product_id == 'core407v' %}
+                                Core407V - Отладочная плата STM32F407VET6
+                            {% elif item.product_id == 'stlink-v2' %}
+                                ST-LINK/V2 (mini) - Программатор/отладчик
+                            {% elif item.product_id == 'arduino-uno' %}
+                                Arduino Uno R3
+                            {% else %}
+                                Товар {{ item.product_id }}
+                            {% endif %}
+                        </span>
+                        <span class="item-quantity">× {{ item.quantity }}</span>
+                    </div>
+                    <span class="item-price">
+                        {% if item.product_id == 'core407v' %}
+                            {% widthratio item.quantity 1 4350 %}
+                        {% elif item.product_id == 'stlink-v2' %}
+                            {% widthratio item.quantity 1 1850 %}
+                        {% elif item.product_id == 'arduino-uno' %}
+                            {% widthratio item.quantity 1 2500 %}
+                        {% else %}
+                            0
+                        {% endif %} ₽
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="order-totals">
+                <div class="total-row">
+                    <span>Сумма товаров:</span>
+                    <span id="subtotal">{{ total_price|floatformat:0 }} ₽</span>
+                </div>
+                <div class="total-row" id="promo-discount-row" style="display: none;">
+                    <span>Скидка по промокоду:</span>
+                    <span id="promo-discount">0 ₽</span>
+                </div>
+                <div class="total-row">
+                    <span>Доставка:</span>
+                    <span id="delivery-cost">0 ₽</span>
+                </div>
+                <div class="total-row final">
+                    <span>Итого к оплате:</span>
+                    <span id="final-total">{{ total_price|floatformat:0 }} ₽</span>
+                </div>
+            </div>
+
+            <div class="delivery-info">
+                <h4>ℹ️ Информация о доставке</h4>
+                <p>• Московская область: <strong>бесплатно</strong></p>
+                <p>• Ближайшие регионы: <strong>1 000 ₽</strong></p>
+                <p>• Другие регионы: <strong>5 000 ₽</strong></p>
+                <p class="warning">⚠️ Доставка осуществляется только в указанные регионы</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно успеха -->
+<div id="success-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-success">
+            <div class="success-icon">✅</div>
+            <h3>Заказ успешно оформлен!</h3>
+            <p id="success-message"></p>
+            <div id="promo-success-info" style="display: none;">
+                <p>🎉 Промокод применен. Ваша скидка: <strong id="promo-success-amount">0 ₽</strong></p>
+            </div>
+            <div class="modal-actions">
+                <!-- Кнопки будут обновлены через JavaScript -->
+                <button onclick="window.location.href='{% url 'main:order_list' %}'" class="modal-button primary">
+                    📦 Перейти к заказам
+                </button>
+                <button onclick="window.location.href='{% url 'main:catalog' %}'" class="modal-button secondary">
+                    🛍️ Продолжить покупки
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const regionSelect = document.getElementById('region-select');
+    const deliveryCostEl = document.getElementById('delivery-cost');
+    const finalTotalEl = document.getElementById('final-total');
+    const subtotalEl = document.getElementById('subtotal');
+    const promoDiscountRow = document.getElementById('promo-discount-row');
+    const promoDiscountEl = document.getElementById('promo-discount');
+    const submitButton = document.getElementById('submit-order');
+    const successModal = document.getElementById('success-modal');
+    const successMessage = document.getElementById('success-message');
+    const promoSuccessInfo = document.getElementById('promo-success-info');
+    const promoSuccessAmount = document.getElementById('promo-success-amount');
+    const promoCodeInput = document.getElementById('promo-code-input');
+    const applyPromoBtn = document.getElementById('apply-promo-btn');
+    const promoMessage = document.getElementById('promo-message');
+
+    const deliveryCosts = {
+        'moscow_region': 0,
+        'near_regions': 1000,
+        'other_regions': 5000
+    };
+
+    const PROMO_CODES = {
+        'WELCOME5': 5,
+        'ELECTRO10': 10,
+        'TECH15': 15,
+        'MEGA25': 25
+    };
+
+    let activePromoCode = null;
+    let activePromoDiscount = 0;
+    let promoDiscountAmount = 0;
+
+    // Функция пересчета итоговой суммы
+    function recalculateTotals() {
+        const region = regionSelect.value;
+        const deliveryCost = deliveryCosts[region] || 0;
+        const subtotal = parseFloat('{{ total_price }}') || 0;
+
+        // Применяем скидку от промокода
+        promoDiscountAmount = activePromoDiscount > 0 ? subtotal * (activePromoDiscount / 100) : 0;
+        const finalTotal = subtotal + deliveryCost - promoDiscountAmount;
+
+        // Обновляем отображение
+        subtotalEl.textContent = subtotal.toLocaleString() + ' ₽';
+        deliveryCostEl.textContent = deliveryCost === 0 ? 'Бесплатно' : deliveryCost.toLocaleString() + ' ₽';
+
+        if (activePromoDiscount > 0) {
+            promoDiscountRow.style.display = 'flex';
+            promoDiscountEl.textContent = '-' + promoDiscountAmount.toFixed(0) + ' ₽';
+        } else {
+            promoDiscountRow.style.display = 'none';
+        }
+
+        finalTotalEl.textContent = finalTotal.toLocaleString() + ' ₽';
+    }
+
+    // Обработчик применения промокода
+    applyPromoBtn.addEventListener('click', function() {
+        const promoCode = promoCodeInput.value.trim().toUpperCase();
+
+        if (!promoCode) {
+            promoMessage.textContent = '❌ Введите промокод';
+            promoMessage.className = 'promo-message error';
+            return;
+        }
+
+        // Проверяем промокод
+        fetch('{% url "main:check_promo" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ promo_code: promoCode })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                activePromoCode = promoCode;
+                activePromoDiscount = data.discount;
+
+                promoMessage.textContent = `✅ ${data.message}`;
+                promoMessage.className = 'promo-message success';
+                promoCodeInput.disabled = true;
+                applyPromoBtn.disabled = true;
+                applyPromoBtn.textContent = 'Применен';
+
+                recalculateTotals();
+            } else {
+                activePromoCode = null;
+                activePromoDiscount = 0;
+
+                promoMessage.textContent = '❌ ' + data.message;
+                promoMessage.className = 'promo-message error';
+                recalculateTotals();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            promoMessage.textContent = '⚠️ Ошибка при проверке промокода';
+            promoMessage.className = 'promo-message error';
+        });
+    });
+
+    // Клик по доступным промокодам
+    document.querySelectorAll('.promo-item').forEach(item => {
+        item.addEventListener('click', function() {
+            const code = this.dataset.code;
+            promoCodeInput.value = code;
+            applyPromoBtn.click();
+        });
+    });
+
+    // Enter в поле промокода
+    promoCodeInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            applyPromoBtn.click();
+        }
+    });
+
+    regionSelect.addEventListener('change', recalculateTotals);
+
+    // Обработка оформления заказа
+    submitButton.addEventListener('click', function() {
+        const region = regionSelect.value;
+        const address = document.getElementById('address-input').value.trim();
+        const phone = document.getElementById('phone-input').value.trim();
+        const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+        const promoCode = activePromoCode || '';
+
+        // Валидация
+        if (!region) {
+            showNotification('❌ Выберите регион доставки', 'error');
+            return;
+        }
+
+        if (!address) {
+            showNotification('❌ Введите адрес доставки', 'error');
+            return;
+        }
+
+        if (!phone) {
+            showNotification('❌ Введите телефон для связи', 'error');
+            return;
+        }
+
+        // Проверяем телефон
+        const phoneRegex = /^\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}$/;
+        if (!phoneRegex.test(phone)) {
+            showNotification('❌ Введите корректный номер телефона в формате +7 (XXX) XXX-XX-XX', 'error');
+            return;
+        }
+
+        // Показываем загрузку
+        submitButton.disabled = true;
+        submitButton.innerHTML = '⏳ Оформляем заказ...';
+
+        // Отправляем запрос
+        fetch('{% url "main:create_order" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                region: region,
+                address: address,
+                phone: phone,
+                payment_method: paymentMethod,
+                promo_code: promoCode
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+if (data.success) {
+        // Показываем модальное окно успеха с кнопкой перехода к заказам
+        successMessage.textContent = data.message;
+
+        // Если был применен промокод
+        if (data.promo_applied) {
+            promoSuccessInfo.style.display = 'block';
+            promoSuccessAmount.textContent = data.promo_discount.toFixed(0) + ' ₽';
+        }
+
+        // Обновляем кнопки в модальном окне
+        const modalActions = document.querySelector('.modal-actions');
+        modalActions.innerHTML = `
+            <a href="{% url 'main:order_list' %}" class="modal-button primary">
+                📦 Перейти к заказам
+            </a>
+            <a href="{% url 'main:catalog' %}" class="modal-button secondary">
+                🛍️ Продолжить покупки
+            </a>
+        `;
+
+        successModal.style.display = 'block';
+
+        // Обновляем счетчик корзины
+        updateCartCounter(0);
+    } else {
+        showNotification('❌ ' + data.message, 'error');
+        submitButton.disabled = false;
+        submitButton.innerHTML = '🎉 Подтвердить заказ';
+    }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('⚠️ Произошла ошибка при оформлении заказа', 'error');
+            submitButton.disabled = false;
+            submitButton.innerHTML = '🎉 Подтвердить заказ';
+        });
+    });
+
+    // Функция для получения CSRF токена
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Функция для уведомлений
+    function showNotification(message, type = 'info') {
+        // Удаляем существующие уведомления
+        const existingNotifications = document.querySelectorAll('.custom-notification');
+        existingNotifications.forEach(notification => notification.remove());
+
+        const notification = document.createElement('div');
+        notification.className = `custom-notification notification-${type}`;
+        notification.innerHTML = `
+            <div class="notification-content">
+                <span class="notification-message">${message}</span>
+                <button class="notification-close">×</button>
+            </div>
+        `;
+
+        document.body.appendChild(notification);
+
+        notification.querySelector('.notification-close').addEventListener('click', function() {
+            notification.remove();
+        });
+
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+
+    function updateCartCounter(count) {
+        const cartCounters = document.querySelectorAll('.cart-counter');
+        cartCounters.forEach(counter => {
+            counter.textContent = `🛒 ${count}`;
+        });
+    }
+
+    // Маска для телефона
+    const phoneInput = document.getElementById('phone-input');
+    phoneInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 0) {
+            if (value[0] === '7' || value[0] === '8') {
+                value = value.substring(1);
+            }
+            value = '+7 (' + value;
+
+            if (value.length > 7) {
+                value = value.substring(0, 7) + ') ' + value.substring(7);
+            }
+            if (value.length > 12) {
+                value = value.substring(0, 12) + '-' + value.substring(12);
+            }
+            if (value.length > 15) {
+                value = value.substring(0, 15) + '-' + value.substring(15, 17);
+            }
+        }
+        e.target.value = value;
+    });
+
+    // Инициализация при загрузке
+    recalculateTotals();
+
+});
+</script>
+
+<style>
+/* Основной контейнер */
+.checkout-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Двухколоночная сетка */
+.checkout-content {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 40px;
+    align-items: start;
+}
+
+@media (max-width: 992px) {
+    .checkout-content {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+}
+
+/* Левая колонка - форма */
+.checkout-form-section {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+@media (max-width: 768px) {
+    .checkout-form-section {
+        padding: 20px;
+    }
+}
+
+/* Секции формы */
+.form-section {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #ecf0f1;
+}
+
+.form-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.form-section h3 {
+    margin-bottom: 20px;
+    color: #2c3e50;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Стили для промокода */
+.promo-section {
+    margin-bottom: 10px;
+}
+
+.promo-input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.promo-input {
+    flex: 1;
+    padding: 12px 15px;
+    border: 2px solid #ecf0f1;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+}
+
+.promo-input:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+.promo-input:disabled {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+}
+
+.promo-btn {
+    padding: 12px 20px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.promo-btn:hover:not(:disabled) {
+    background: #2980b9;
+    transform: translateY(-1px);
+}
+
+.promo-btn:disabled {
+    background: #95a5a6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.promo-message {
+    padding: 10px 15px;
+    border-radius: 6px;
+    margin: 10px 0;
+    font-size: 14px;
+    animation: fadeIn 0.3s ease;
+}
+
+.promo-message.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.promo-message.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.available-promos {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.available-promos p {
+    margin-bottom: 8px;
+    color: #7f8c8d;
+    font-size: 14px;
+}
+
+.promo-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.promo-item {
+    padding: 6px 12px;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Courier New', monospace;
+}
+
+.promo-item:hover {
+    background: #3498db;
+    border-color: #3498db;
+    color: white;
+    transform: translateY(-1px);
+}
+
+/* Формы */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.form-select,
+.form-input,
+.form-textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #ecf0f1;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+    font-family: inherit;
+}
+
+.form-select:focus,
+.form-input:focus,
+.form-textarea:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.form-help {
+    font-size: 14px;
+    color: #7f8c8d;
+    margin-top: 5px;
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Способ оплаты */
+.payment-methods {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.payment-method {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border: 2px solid #ecf0f1;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.payment-method:hover {
+    border-color: #3498db;
+    background: #f8f9fa;
+}
+
+.payment-method input[type="radio"] {
+    margin-right: 15px;
+    width: 18px;
+    height: 18px;
+}
+
+.payment-info {
+    flex: 1;
+}
+
+.payment-title {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #2c3e50;
+}
+
+.payment-desc {
+    font-size: 14px;
+    color: #7f8c8d;
+}
+
+/* Кнопка оформления */
+.checkout-button {
+    width: 100%;
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    color: white;
+    border: none;
+    padding: 18px;
+    border-radius: 10px;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.checkout-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(39, 174, 96, 0.4);
+}
+
+.checkout-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Правая колонка - итоги */
+.checkout-summary {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 20px;
+}
+
+@media (max-width: 992px) {
+    .checkout-summary {
+        position: static;
+    }
+}
+
+@media (max-width: 768px) {
+    .checkout-summary {
+        padding: 20px;
+    }
+}
+
+.checkout-summary h3 {
+    margin-bottom: 20px;
+    color: #2c3e50;
+    border-bottom: 2px solid #e74c3c;
+    padding-bottom: 10px;
+    font-size: 1.3rem;
+}
+
+/* Товары в заказе */
+.order-items {
+    margin-bottom: 20px;
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.order-items::-webkit-scrollbar {
+    width: 6px;
+}
+
+.order-items::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.order-items::-webkit-scrollbar-thumb {
+    background: #bdc3c7;
+    border-radius: 3px;
+}
+
+.order-items::-webkit-scrollbar-thumb:hover {
+    background: #95a5a6;
+}
+
+.order-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 12px 0;
+    border-bottom: 1px solid #ecf0f1;
+}
+
+.order-item:last-child {
+    border-bottom: none;
+}
+
+.item-info {
+    flex: 1;
+    padding-right: 10px;
+}
+
+.item-name {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 5px;
+    line-height: 1.4;
+}
+
+.item-quantity {
+    font-size: 14px;
+    color: #7f8c8d;
+    background: #f8f9fa;
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.item-price {
+    font-weight: 600;
+    color: #2c3e50;
+    white-space: nowrap;
+}
+
+/* Итоги заказа */
+.order-totals {
+    border-top: 2px solid #ecf0f1;
+    padding-top: 15px;
+}
+
+.total-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #2c3e50;
+}
+
+.total-row.final {
+    font-size: 18px;
+    font-weight: 700;
+    color: #2c3e50;
+    border-top: 1px solid #bdc3c7;
+    padding-top: 10px;
+    margin-top: 10px;
+}
+
+/* Информация о доставке */
+.delivery-info {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.delivery-info h4 {
+    margin-bottom: 10px;
+    color: #2c3e50;
+    font-size: 1.1rem;
+}
+
+.delivery-info p {
+    margin: 5px 0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.warning {
+    color: #e74c3c;
+    font-weight: 600;
+    margin-top: 10px !important;
+    padding: 8px 12px;
+    background: rgba(231, 76, 60, 0.1);
+    border-radius: 6px;
+    border-left: 3px solid #e74c3c;
+}
+
+/* Модальное окно */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+    background: white;
+    padding: 40px;
+    border-radius: 15px;
+    text-align: center;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    animation: slideUp 0.4s ease;
+}
+
+@media (max-width: 768px) {
+    .modal-content {
+        padding: 30px 20px;
+    }
+}
+
+.modal-success .success-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    animation: scaleIn 0.5s ease;
+}
+
+.modal-success h3 {
+    color: #27ae60;
+    margin-bottom: 15px;
+    font-size: 1.5rem;
+}
+
+.modal-success p {
+    margin-bottom: 15px;
+    color: #7f8c8d;
+    line-height: 1.6;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 25px;
+    justify-content: center;
+}
+
+@media (max-width: 480px) {
+    .modal-actions {
+        flex-direction: column;
+    }
+}
+
+.modal-button {
+    padding: 12px 25px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.modal-button.primary {
+    background: #3498db;
+    color: white;
+}
+
+.modal-button.secondary {
+    background: #ecf0f1;
+    color: #2c3e50;
+}
+
+.modal-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+/* Уведомления */
+.custom-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1001;
+    min-width: 300px;
+    max-width: 400px;
+    animation: slideInRight 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    .custom-notification {
+        left: 20px;
+        right: 20px;
+        max-width: none;
+    }
+}
+
+.notification-content {
+    background: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-left: 4px solid #3498db;
+}
+
+.notification-success .notification-content {
+    border-left-color: #27ae60;
+}
+
+.notification-error .notification-content {
+    border-left-color: #e74c3c;
+}
+
+.notification-message {
+    flex: 1;
+    font-weight: 500;
+    margin-right: 15px;
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: #7f8c8d;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+}
+
+.notification-close:hover {
+    background-color: #f1f2f6;
+}
+
+/* Анимации */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Ховер эффекты для элементов */
+.order-item:hover {
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    padding-left: 10px;
+    padding-right: 10px;
+    margin-left: -10px;
+    margin-right: -10px;
+}
+
+.payment-method:hover .payment-title {
+    color: #3498db;
+}
+
+/* Фокус состояния */
+.form-select:focus,
+.form-input:focus,
+.form-textarea:focus,
+.promo-input:focus {
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+/* Подсветка активного способа оплаты */
+.payment-method input[type="radio"]:checked + .payment-info .payment-title {
+    color: #3498db;
+}
+
+.payment-method input[type="radio"]:checked ~ .payment-info {
+    color: #2c3e50;
+}
+
+/* Адаптивность для маленьких экранов */
+@media (max-width: 480px) {
+    .promo-input-group {
+        flex-direction: column;
+    }
+
+    .promo-btn {
+        width: 100%;
+    }
+
+    .payment-method {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .payment-method input[type="radio"] {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+}
+</style>
+{% endblock %}
